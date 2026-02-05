@@ -49,7 +49,7 @@ export function loadConfig(configPath) {
 
     // Paths
     paths: {
-      dataDir: fileConfig.paths?.dataDir || path.resolve(process.cwd(), 'data'),
+      dataDir: process.env.DATA_DIR ? path.resolve(process.cwd(), process.env.DATA_DIR) : (fileConfig.paths?.dataDir || path.resolve(process.cwd(), 'data')),
       referencesFile: fileConfig.paths?.referencesFile || process.env.REFERENCES_FILE,
     },
 
