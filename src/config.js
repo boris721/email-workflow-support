@@ -38,7 +38,7 @@ export function loadConfig(configPath) {
       user: fileConfig.smtp?.user || process.env.EMAIL_USER,
       pass: fileConfig.smtp?.pass || process.env.EMAIL_PASS,
       secure: true,
-      fromName: fileConfig.smtp?.fromName || process.env.SMTP_FROM_NAME || config.serviceName,
+      fromName: fileConfig.smtp?.fromName || process.env.SMTP_FROM_NAME || fileConfig.serviceName || process.env.SERVICE_NAME || 'Support',
     },
 
     // Gateway / LLM Settings
