@@ -1,0 +1,32 @@
+{
+  "serviceName": "My SaaS Support",
+
+  "imap": {
+    "host": "imap.example.com",
+    "port": 993,
+    "user": "support@example.com",
+    "pass": "your_app_password_here"
+  },
+
+  "smtp": {
+    "host": "smtp.example.com",
+    "port": 465,
+    "user": "support@example.com",
+    "pass": "your_app_password_here",
+    "fromName": "Acme Support"
+  },
+
+  "gateway": {
+    "port": "18789",
+    "token": "your_gateway_token_here"
+  },
+
+  "paths": {
+    "dataDir": "./data",
+    "referencesFile": "./data/reference-responses.json"
+  },
+
+  "discord": {
+    "channelId": ""
+  }
+}

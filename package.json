@@ -1,1 +1,37 @@
-{"name":"email-support-workflow","version":"1.0.0","type":"module","scripts":{"test":"vitest run"},"dependencies":{"commander":"^14.0.3","dotenv":"^17.2.3","imapflow":"^1.2.8","mailparser":"^3.9.3","nodemailer":"^8.0.0"},"devDependencies":{"vitest":"^1.6.1"}}
+{
+  "name": "email-support-workflow",
+  "version": "1.0.0",
+  "description": "Automated email support pipeline with LLM-powered classification and human-in-the-loop approval",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/boris721/email-workflow-support"
+  },
+  "keywords": [
+    "email",
+    "support",
+    "llm",
+    "automation",
+    "workflow",
+    "imap",
+    "smtp",
+    "discord"
+  ],
+  "bin": {
+    "email-workflow": "./bin/email-workflow.js"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "commander": "^14.0.3",
+    "dotenv": "^17.2.3",
+    "imapflow": "^1.2.8",
+    "mailparser": "^3.9.3",
+    "nodemailer": "^8.0.0"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.1"
+  }
+}

@@ -1,0 +1,28 @@
+[
+  {
+    "id": "password-reset",
+    "category": "account",
+    "keywords": ["password", "reset", "forgot", "login", "can't sign in", "Passwort", "zurücksetzen"],
+    "languages": ["en", "de"],
+    "question_summary": "User wants to reset their password",
+    "reference_response_en": "Hi there,\n\nYou can reset your password by clicking \"Forgot Password\" on the login page. You'll receive a reset link within a few minutes.\n\nIf you don't see the email, please check your spam folder. If you're still having trouble, let us know and we'll help you get back in.\n\nBest,\nThe Support Team",
+    "reference_response_de": "Hallo,\n\nSie können Ihr Passwort zurücksetzen, indem Sie auf der Login-Seite auf \"Passwort vergessen\" klicken. Sie erhalten innerhalb weniger Minuten einen Link zum Zurücksetzen.\n\nFalls Sie die E-Mail nicht finden, schauen Sie bitte in Ihrem Spam-Ordner nach. Sollte es weiterhin Probleme geben, melden Sie sich gerne bei uns.\n\nMit freundlichen Grüßen,\nDas Support-Team"
+  },
+  {
+    "id": "cancel-subscription",
+    "category": "billing",
+    "keywords": ["cancel", "subscription", "unsubscribe", "stop billing", "annuler", "abonnement"],
+    "languages": ["en", "fr"],
+    "question_summary": "User wants to cancel their subscription",
+    "reference_response_en": "Hi,\n\nYou can cancel your subscription at any time from your account settings under Billing → Manage Plan. Your access will remain active until the end of your current billing period.\n\nIf you'd like to share feedback on why you're leaving, we'd love to hear it — it helps us improve.\n\nBest,\nThe Support Team",
+    "reference_response_fr": "Bonjour,\n\nVous pouvez annuler votre abonnement à tout moment depuis les paramètres de votre compte sous Facturation → Gérer le plan. Votre accès restera actif jusqu'à la fin de votre période de facturation en cours.\n\nSi vous souhaitez nous faire part de vos commentaires, n'hésitez pas — cela nous aide à nous améliorer.\n\nCordialement,\nL'équipe Support"
+  },
+  {
+    "id": "api-rate-limits",
+    "category": "technical",
+    "keywords": ["API", "rate limit", "429", "too many requests", "throttle", "quota"],
+    "languages": ["en"],
+    "question_summary": "User is hitting API rate limits",
+    "reference_response_en": "Hi,\n\nOur API enforces rate limits to ensure fair usage across all customers. The current limits are:\n\n- Free plan: 100 requests/minute\n- Pro plan: 1,000 requests/minute\n- Enterprise: Custom limits\n\nIf you're hitting 429 errors, we recommend implementing exponential backoff in your client. You can also check your current usage in the dashboard under API → Usage.\n\nIf you need higher limits, let us know your use case and we can discuss options.\n\nBest,\nThe Support Team"
+  }
+]
