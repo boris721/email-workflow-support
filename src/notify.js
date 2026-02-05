@@ -44,7 +44,11 @@ export class NotificationService {
 
     try {
       const target = `channel:${this.channelId}`;
-      execFileSync(OPENCLAW, [
+      // Use node directly to avoid shebang PATH issues in cron
+      const OPENCLAW_SCRIPT = '/usr/local/lib/node_modules/openclaw/openclaw.mjs';
+      const NODE = '/usr/local/bin/node';
+      execFileSync(NODE, [
+        OPENCLAW_SCRIPT,
         'message', 'send',
         '--channel', 'discord',
         '--target', target,
