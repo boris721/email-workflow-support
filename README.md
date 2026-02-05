@@ -39,6 +39,7 @@ Each cron run advances the state by one step. Spam and automated notifications a
 - **Discord notifications** — Posts draft previews with original email + proposed reply for team review
 - **Knowledge base growth** — Optionally adds approved replies back to the reference library (`--add-ref`)
 - **Config-driven** — Works for any product; just update your `.env` and reference responses
+- **Multi-instance** — Configurable `DATA_DIR` lets you run separate instances per product/agent
 - **JSON config alternative** — Pass a `config.json` instead of (or alongside) environment variables
 - **File-based state** — No database required; state is persisted as simple JSON files
 - **Cron-friendly** — Designed to run every few minutes via cron or systemd timer
@@ -101,6 +102,7 @@ See [`.env.example`](.env.example) for a fully commented template. Key variables
 | `OPENCLAW_GATEWAY_TOKEN` | Auth token for the gateway (or use `CLAWD_TOKEN`) |
 | `REFERENCES_FILE` | Path to your reference responses JSON |
 | `DISCORD_CHANNEL_ID` | Discord channel for draft notifications |
+| `DATA_DIR` | Custom data directory path (default: `./data/`). Allows multiple instances with separate state. |
 
 ### JSON Config File
 
