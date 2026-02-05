@@ -207,7 +207,8 @@ program.command('edit')
       process.exit(1);
     }
 
-    draft.reply_body = options.body;
+    // Fix: Preserve newlines passed as literal \n
+    draft.reply_body = options.body.replace(/\\n/g, '\n');
     state.saveDrafts(drafts);
     state.clearPosted(); // Clear posted marker to force re-post to Discord
     console.log(`Draft ${options.uid} updated. Will repost preview on next cron.`);
