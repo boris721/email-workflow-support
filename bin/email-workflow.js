@@ -1,0 +1,243 @@
+#!/usr/bin/env node
+
+import { Command } from 'commander';
+import { 
+  loadConfig, 
+  ImapService, 
+  SmtpService, 
+  ClassifierService, 
+  ReferenceService, 
+  WorkflowState, 
+  WorkflowStatus,
+  NotificationService
+} from '../src/index.js';
+import path from 'path';
+
+const program = new Command();
+
+program
+  .name('email-workflow')
+  .description('Email support workflow CLI')
+  .version('1.0.0')
+  .option('-c, --config <path>', 'Path to config file');
+
+// --- Helper to bootstrap services ---
+function bootstrap(options) {
+  const config = loadConfig(options.config);
+  const state = new WorkflowState(config);
+  const imap = new ImapService(config.imap);
+  const smtp = new SmtpService(config.smtp);
+  const references = new ReferenceService(config);
+  // Load references for classifier
+  const refData = references.load();
+  const classifier = new ClassifierService(config, refData);
+  const notify = new NotificationService(config);
+
+  return { config, state, imap, smtp, references, classifier, notify };
+}
+
+// --- Commands ---
+
+program.command('cron')
+  .description('Run the workflow state machine (check -> classify -> draft -> notify)')
+  .action(async (options, command) => {
+    const { state, imap, classifier, notify } = bootstrap(command.optsWithGlobals());
+    
+    try {
+      const status = state.getCurrentStatus();
+      console.log(`Current status: ${status}`);
+
+      // 1. AWAITING: If posted, do nothing (wait for human)
+      if (status === WorkflowStatus.AWAITING) {
+        console.log('State is AWAITING. Exiting.');
+        return;
+      }
+
+      // 2. DRAFTED: If drafts exist but not posted, post them
+      if (status === WorkflowStatus.DRAFTED) {
+        const drafts = state.loadDrafts();
+        const replyDrafts = drafts.filter(d => d.action === 'reply');
+        
+        if (replyDrafts.length === 0) {
+          console.log('No reply drafts found. Clearing state.');
+          state.clearDrafts();
+          state.clearPending();
+          // Fall through to IDLE check? No, usually exit and wait for next cycle or fall through.
+          // Let's fall through to allow picking up new stuff immediately if desired, 
+          // but strictly adhering to cron logic:
+        } else {
+          console.log(`Posting ${replyDrafts.length} drafts to Discord...`);
+          await notify.notifyDrafts(drafts);
+          state.markPosted();
+          state.clearPending(); // Emails are now handled (drafted)
+          console.log('Drafts posted. State -> AWAITING');
+          return;
+        }
+      }
+
+      // 3. PENDING: Classify
+      if (status === WorkflowStatus.PENDING) {
+        const pending = state.loadPending();
+        if (pending.length === 0) {
+          state.clearPending();
+        } else {
+          console.log(`Classifying ${pending.length} pending emails...`);
+          const drafts = await classifier.classify(pending);
+          state.saveDrafts(drafts);
+          console.log('Drafts saved. State -> DRAFTED');
+          return; // Next cycle will post them
+        }
+      }
+
+      // 4. IDLE: Check IMAP
+      // Only check if we are truly idle (or fell through from empty pending/drafts)
+      console.log('State IDLE. Checking IMAP...');
+      // Note: We need a place to store the lastUID. 
+      // The original script stored it in .email-state.json.
+      // ImapService takes a 'sinceUid'. We should persist this.
+      // Let's assume WorkflowState can handle a generic persistent store or we add it.
+      // For now, let's implement a simple state file for IMAP alongside others.
+      
+      const imapStateFile = path.join(state.dataDir, 'imap-state.json');
+      let imapState = { lastUid: 0 };
+      const fs = await import('fs');
+      if (fs.existsSync(imapStateFile)) {
+        imapState = JSON.parse(fs.readFileSync(imapStateFile, 'utf8'));
+      }
+
+      const { emails, lastUid } = await imap.fetchNewEmails(imapState.lastUid);
+      
+      if (lastUid > imapState.lastUid) {
+        imapState.lastUid = lastUid;
+        fs.writeFileSync(imapStateFile, JSON.stringify(imapState, null, 2));
+      }
+
+      if (emails.length > 0) {
+        console.log(`Found ${emails.length} new emails.`);
+        state.savePending(emails);
+        console.log('Emails saved. State -> PENDING');
+      } else {
+        console.log('No new emails.');
+      }
+
+    } catch (err) {
+      console.error('Workflow error:', err);
+      process.exit(1);
+    }
+  });
+
+program.command('approve')
+  .description('Approve and send drafts')
+  .option('--uid <number>', 'Approve specific draft UID')
+  .option('--add-ref', 'Add to reference library after sending')
+  .action(async (options, command) => {
+    const { state, smtp, references, notify } = bootstrap(command.optsWithGlobals());
+    
+    const drafts = state.loadDrafts();
+    if (drafts.length === 0) {
+      console.log('No drafts to approve.');
+      return;
+    }
+
+    const toApprove = options.uid 
+      ? drafts.filter(d => d.uid == options.uid && d.action === 'reply')
+      : drafts.filter(d => d.action === 'reply');
+
+    if (toApprove.length === 0) {
+      console.log('No matching drafts found.');
+      return;
+    }
+
+    const results = [];
+    for (const draft of toApprove) {
+      console.log(`Sending to ${draft.from}...`);
+      try {
+        await smtp.send({
+          to: draft.from,
+          subject: draft.reply_subject,
+          text: draft.reply_body,
+          inReplyTo: draft.messageId, // Ensure messageId is preserved in classify/draft
+        });
+        
+        results.push({ uid: draft.uid, status: 'sent' });
+        notify.send(`✅ Email sent to ${draft.from}`);
+
+        if (options.addRef) {
+          try {
+            const entry = await references.addFromDraft(draft);
+            notify.send(`📚 Reference added: ${entry.id}`);
+          } catch (e) {
+            console.error('Ref gen failed:', e.message);
+          }
+        }
+
+      } catch (err) {
+        console.error(`Failed to send to ${draft.from}:`, err);
+        results.push({ uid: draft.uid, status: 'error' });
+      }
+    }
+
+    // Update drafts list
+    const sentUids = new Set(results.filter(r => r.status === 'sent').map(r => r.uid));
+    const remaining = drafts.filter(d => !sentUids.has(d.uid));
+    
+    if (remaining.length === 0) {
+      state.clearDrafts();
+      state.clearPending();
+      state.clearPosted();
+      console.log('All drafts handled. State -> IDLE');
+    } else {
+      state.saveDrafts(remaining);
+      console.log(`${remaining.length} drafts remaining.`);
+    }
+  });
+
+program.command('edit')
+  .description('Edit a draft body')
+  .requiredOption('--uid <number>', 'Draft UID')
+  .requiredOption('--body <text>', 'New body text')
+  .action(async (options, command) => {
+    const { state } = bootstrap(command.optsWithGlobals());
+    const drafts = state.loadDrafts();
+    const draft = drafts.find(d => d.uid == options.uid);
+    
+    if (!draft) {
+      console.error('Draft not found.');
+      process.exit(1);
+    }
+
+    draft.reply_body = options.body;
+    state.saveDrafts(drafts);
+    state.clearPosted(); // Clear posted marker to force re-post to Discord
+    console.log(`Draft ${options.uid} updated. Will repost preview on next cron.`);
+  });
+
+program.command('reject')
+  .description('Reject (delete) a draft')
+  .option('--uid <number>', 'Reject specific draft UID')
+  .action(async (options, command) => {
+    const { state } = bootstrap(command.optsWithGlobals());
+    let drafts = state.loadDrafts();
+
+    if (options.uid) {
+      drafts = drafts.filter(d => d.uid != options.uid);
+      console.log(`Rejected draft ${options.uid}.`);
+    } else {
+      drafts = []; // Reject all? Maybe too dangerous.
+      // The original script didn't have a clear "reject all" but "reject <uid>"
+      // Let's assume reject without args clears all.
+      console.log('Rejecting ALL drafts.');
+    }
+
+    if (drafts.length === 0) {
+      state.clearDrafts();
+      state.clearPending();
+      state.clearPosted();
+      console.log('State cleaned. State -> IDLE');
+    } else {
+      state.saveDrafts(drafts);
+      state.clearPosted(); // Force repost of remaining
+    }
+  });
+
+program.parse(process.argv);
