@@ -19,7 +19,7 @@
     "discord"
   ],
   "bin": {
-    "email-workflow": "./bin/email-workflow.js"
+    "email-workflow": "./bin/email-workflow"
   },
   "scripts": {
     "test": "vitest run"
