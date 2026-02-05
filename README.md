@@ -52,7 +52,7 @@ Each cron run advances the state by one step. Spam and automated notifications a
 
 - Node.js 18+ (uses native `fetch`)
 - An IMAP/SMTP email account (e.g., Gmail, Fastmail, any provider)
-- [OpenClaw](https://github.com/nichochar/openclaw) running locally (for LLM access), or adapt `src/llm.js` for direct API calls
+- [OpenClaw](https://github.com/openclaw/openclaw) running locally (for LLM access), or adapt `src/llm.js` for direct API calls
 - A Discord channel + bot (optional, for notifications)
 
 ### Setup
@@ -193,7 +193,7 @@ Your team can then use CLI commands (`approve`, `edit`, `reject`) to take action
 
 ## 🤖 Integration with OpenClaw
 
-This project uses [OpenClaw](https://github.com/nichochar/openclaw)'s `llm-task` gateway to access LLMs. The gateway runs locally and provides a unified HTTP API for structured JSON responses with schema validation.
+This project uses [OpenClaw](https://github.com/openclaw/openclaw)'s `llm-task` gateway to access LLMs. The gateway runs locally and provides a unified HTTP API for structured JSON responses with schema validation.
 
 **How it works:**
 - `src/llm.js` sends a POST request to `http://127.0.0.1:{port}/tools/invoke` with the prompt, input data, and a JSON schema
