@@ -36,20 +36,27 @@ function bootstrap(options) {
   return { config, state, imap, smtp, references, classifier, notify };
 }
 
+// --- Helper to log with timestamp ---
+function log(msg) {
+  const now = new Date();
+  const timestamp = now.toISOString().replace('T', ' ').substring(0, 19);
+  console.log(`[${timestamp}] ${msg}`);
+}
+
 // --- Commands ---
 
 program.command('cron')
   .description('Run the workflow state machine (check -> classify -> draft -> notify)')
   .action(async (options, command) => {
     const { state, imap, classifier, notify } = bootstrap(command.optsWithGlobals());
-    
+
     try {
       const status = state.getCurrentStatus();
-      console.log(`Current status: ${status}`);
+      log(`Current status: ${status}`);
 
       // 1. AWAITING: If posted, do nothing (wait for human)
       if (status === WorkflowStatus.AWAITING) {
-        console.log('State is AWAITING. Exiting.');
+        log('State is AWAITING. Exiting.');
         return;
       }
 
@@ -57,20 +64,20 @@ program.command('cron')
       if (status === WorkflowStatus.DRAFTED) {
         const drafts = state.loadDrafts();
         const replyDrafts = drafts.filter(d => d.action === 'reply');
-        
+
         if (replyDrafts.length === 0) {
-          console.log('No reply drafts found. Clearing state.');
+          log('No reply drafts found. Clearing state.');
           state.clearDrafts();
           state.clearPending();
           // Fall through to IDLE check? No, usually exit and wait for next cycle or fall through.
-          // Let's fall through to allow picking up new stuff immediately if desired, 
+          // Let's fall through to allow picking up new stuff immediately if desired,
           // but strictly adhering to cron logic:
         } else {
-          console.log(`Posting ${replyDrafts.length} drafts to Discord...`);
+          log(`Posting ${replyDrafts.length} drafts to Discord...`);
           await notify.notifyDrafts(drafts);
           state.markPosted();
           state.clearPending(); // Emails are now handled (drafted)
-          console.log('Drafts posted. State -> AWAITING');
+          log('Drafts posted. State -> AWAITING');
           return;
         }
       }
@@ -81,17 +88,17 @@ program.command('cron')
         if (pending.length === 0) {
           state.clearPending();
         } else {
-          console.log(`Classifying ${pending.length} pending emails...`);
+          log(`Classifying ${pending.length} pending emails...`);
           const drafts = await classifier.classify(pending);
           state.saveDrafts(drafts);
-          console.log('Drafts saved. State -> DRAFTED');
+          log('Drafts saved. State -> DRAFTED');
           return; // Next cycle will post them
         }
       }
 
       // 4. IDLE: Check IMAP
       // Only check if we are truly idle (or fell through from empty pending/drafts)
-      console.log('State IDLE. Checking IMAP...');
+      log('State IDLE. Checking IMAP...');
       // Note: We need a place to store the lastUID. 
       // The original script stored it in .email-state.json.
       // ImapService takes a 'sinceUid'. We should persist this.
@@ -106,22 +113,23 @@ program.command('cron')
       }
 
       const { emails, lastUid } = await imap.fetchNewEmails(imapState.lastUid);
-      
+
       if (lastUid > imapState.lastUid) {
         imapState.lastUid = lastUid;
         fs.writeFileSync(imapStateFile, JSON.stringify(imapState, null, 2));
       }
 
       if (emails.length > 0) {
-        console.log(`Found ${emails.length} new emails.`);
+        const uids = emails.map(e => e.uid).join(', ');
+        log(`Found ${emails.length} new emails (UIDs: ${uids}).`);
         state.savePending(emails);
-        console.log('Emails saved. State -> PENDING');
+        log('Emails saved. State -> PENDING');
       } else {
-        console.log('No new emails.');
+        log('No new emails.');
       }
 
     } catch (err) {
-      console.error('Workflow error:', err);
+      log.error('Workflow error:', err);
       process.exit(1);
     }
   });

@@ -122,6 +122,7 @@ Pass `--config path/to/config.json` to the CLI. See [`config.example.json`](conf
 | `approve [--uid N]` | Approve and send draft(s). Omit `--uid` to approve all. |
 | `approve --uid N --add-ref` | Approve, send, and add the response to the knowledge base |
 | `edit --uid N --body "..."` | Edit a draft's reply text (triggers re-notification on next cron) |
+  > **Tip:** Use `\\n` literals for newlines in the body, e.g., `edit --uid 42 --body "Hello,\n\nThank you for reaching out.\n\nBest regards,\nSupport Team"` |
 | `reject [--uid N]` | Reject draft(s) without sending. Omit `--uid` to reject all. |
 
 All commands accept `--config <path>` to load a JSON config file.
