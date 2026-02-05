@@ -114,6 +114,7 @@ Respond with JSON:
           ...draft,
           original_text: orig.text || '',
           original_from: orig.from || draft.from || '',
+          original_replyTo: orig.replyTo || '',
           original_date: orig.date || '',
           original_messageId: orig.messageId || '',
         };

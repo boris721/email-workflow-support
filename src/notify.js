@@ -14,8 +14,11 @@ export class NotificationService {
     return drafts.map(d => {
       const icon = d.action === 'ignore' ? '🚫' : '✉️';
       const conf = Math.round((d.confidence || 0) * 100);
+      const replyTo = d.original_replyTo && d.original_replyTo !== d.original_from
+        ? `  ↩️ Reply-To: ${d.original_replyTo}`
+        : '';
       const parts = [
-        `${icon} **UID ${d.uid}** | ${d.original_from || d.from}`,
+        `${icon} **UID ${d.uid}** | ${d.original_from || d.from}${replyTo}`,
         `**${d.subject}** → ${d.category} (${conf}%)`,
         d.summary || '',
       ];

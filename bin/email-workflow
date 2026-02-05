@@ -158,10 +158,12 @@ program.command('approve')
 
     const results = [];
     for (const draft of toApprove) {
-      console.log(`Sending to ${draft.from}...`);
+      // Reply-To takes priority over From (e.g., SaaS forwarded emails)
+      const recipient = draft.original_replyTo || draft.from;
+      console.log(`Sending to ${recipient}...`);
       try {
         await smtp.send({
-          to: draft.from,
+          to: recipient,
           subject: draft.reply_subject,
           text: draft.reply_body,
           inReplyTo: draft.original_messageId,

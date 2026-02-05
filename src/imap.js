@@ -106,6 +106,7 @@ export class ImapService {
         const email = {
           uid: msg.uid,
           from: parsed.from?.text || msg.envelope?.from?.[0]?.address || 'unknown',
+          replyTo: parsed.replyTo?.text || '',
           to: parsed.to?.text || '',
           subject: parsed.subject || msg.envelope?.subject || '(no subject)',
           date: parsed.date?.toISOString() || msg.envelope?.date?.toISOString() || new Date().toISOString(),
