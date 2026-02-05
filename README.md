@@ -52,7 +52,7 @@ Each cron run advances the state by one step. Spam and automated notifications a
 
 - Node.js 18+ (uses native `fetch`)
 - An IMAP/SMTP email account (e.g., Gmail, Fastmail, any provider)
-- [OpenClaw](https://github.com/openclaw/openclaw) running locally (for LLM access), or adapt `src/llm.js` for direct API calls
+- [openclaw](https://github.com/openclaw/openclaw) running locally (for LLM access), or adapt `src/llm.js` for direct API calls
 - A Discord channel + bot (optional, for notifications)
 
 ### Setup
@@ -98,7 +98,7 @@ See [`.env.example`](.env.example) for a fully commented template. Key variables
 | `SMTP_HOST` / `SMTP_PORT` | SMTP server connection |
 | `EMAIL_USER` / `EMAIL_PASS` | Email account credentials (used for both IMAP & SMTP) |
 | `SMTP_FROM_NAME` | Display name for outgoing emails (e.g., "Acme Support") |
-| `OPENCLAW_GATEWAY_PORT` | Port for the OpenClaw gateway (default: `18789`) |
+| `OPENCLAW_GATEWAY_PORT` | Port for the openclaw gateway (default: `18789`) |
 | `OPENCLAW_GATEWAY_TOKEN` | Auth token for the gateway (or use `CLAWD_TOKEN`) |
 | `REFERENCES_FILE` | Path to your reference responses JSON |
 | `DISCORD_CHANNEL_ID` | Discord channel for draft notifications |
@@ -156,7 +156,7 @@ src/
   imap.js               # IMAP service — connects, fetches new emails
   send.js               # SMTP service — sends approved replies
   classify.js           # LLM classifier — matches emails to references, drafts replies
-  llm.js                # OpenClaw gateway HTTP client (llm-task tool)
+  llm.js                # openclaw gateway HTTP client (llm-task tool)
   reference.js          # Reference library — load/save/add entries
   state.js              # File-based state machine (IDLE → PENDING → DRAFTED → AWAITING)
   notify.js             # Discord notification service
@@ -187,20 +187,20 @@ Your team can then use CLI commands (`approve`, `edit`, `reject`) to take action
 **Setup:**
 1. Create a Discord bot and add it to your server
 2. Set `DISCORD_CHANNEL_ID` in your `.env`
-3. The notification service uses OpenClaw's `message send` CLI under the hood
+3. The notification service uses openclaw's `message send` CLI under the hood
 
 ---
 
-## 🤖 Integration with OpenClaw
+## 🤖 Integration with openclaw
 
-This project uses [OpenClaw](https://github.com/openclaw/openclaw)'s `llm-task` gateway to access LLMs. The gateway runs locally and provides a unified HTTP API for structured JSON responses with schema validation.
+This project uses [openclaw](https://github.com/openclaw/openclaw)'s `llm-task` gateway to access LLMs. The gateway runs locally and provides a unified HTTP API for structured JSON responses with schema validation.
 
 **How it works:**
 - `src/llm.js` sends a POST request to `http://127.0.0.1:{port}/tools/invoke` with the prompt, input data, and a JSON schema
 - The gateway routes the request to the configured LLM provider (OpenAI, Anthropic, etc.)
 - The response is validated against the schema and returned as structured JSON
 
-**This is optional.** If you don't want to use OpenClaw, you can replace `src/llm.js` with direct calls to the OpenAI or Anthropic API. The `callLlmTask` function has a simple interface — just swap the HTTP call for your preferred SDK.
+**This is optional.** If you don't want to use openclaw, you can replace `src/llm.js` with direct calls to the OpenAI or Anthropic API. The `callLlmTask` function has a simple interface — just swap the HTTP call for your preferred SDK.
 
 ---
 
@@ -252,7 +252,7 @@ crontab -e
 - Use full paths in cron (Node.js binary, project directory)
 - Redirect output to a log file for debugging
 - The state machine is idempotent — running it more frequently than needed is harmless
-- If you need the OpenClaw gateway, make sure it's running before the cron fires
+- If you need the openclaw gateway, make sure it's running before the cron fires
 
 ---
 
