@@ -115,6 +115,7 @@ Respond with JSON:
           original_text: orig.text || '',
           original_from: orig.from || draft.from || '',
           original_date: orig.date || '',
+          original_messageId: orig.messageId || '',
         };
       }
       return draft;

@@ -156,7 +156,8 @@ program.command('approve')
           to: draft.from,
           subject: draft.reply_subject,
           text: draft.reply_body,
-          inReplyTo: draft.messageId, // Ensure messageId is preserved in classify/draft
+          inReplyTo: draft.original_messageId,
+          references: draft.original_messageId,
         });
         
         results.push({ uid: draft.uid, status: 'sent' });

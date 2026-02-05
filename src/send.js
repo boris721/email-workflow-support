@@ -46,7 +46,7 @@ export class SmtpService {
    */
   async send({ to, subject, text, inReplyTo, references }) {
     const mailOptions = {
-      from: `"Support" <${this.config.user}>`, // TODO: Make name configurable
+      from: `"${this.config.fromName || 'Support'}" <${this.config.user}>`,
       to,
       subject,
       text,
