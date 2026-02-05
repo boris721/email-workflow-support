@@ -1,4 +1,6 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
+
+const OPENCLAW = '/usr/local/bin/openclaw';
 
 export class NotificationService {
   constructor(config) {
@@ -41,18 +43,13 @@ export class NotificationService {
     }
 
     try {
-      // Escape generic shell characters is hard, so we pass as env var or careful quoting.
-      // Better to use spawn, but for now strict quoting.
-      // Actually, execSync with proper args is tricky.
-      // Let's use a simple approach: passed via env var to a node script? No.
-      // We will try to sanitize.
-      
-      // Ideally, we'd use a real Discord client or webhook. 
-      // But adhering to the environment tools:
       const target = `channel:${this.channelId}`;
-      const cmd = `openclaw message send --channel discord --target "${target}" --message "${text.replace(/"/g, '\\"')}"`;
-      
-      execSync(cmd, { stdio: 'ignore', timeout: 30000 });
+      execFileSync(OPENCLAW, [
+        'message', 'send',
+        '--channel', 'discord',
+        '--target', target,
+        '--message', text,
+      ], { stdio: 'pipe', timeout: 30000 });
     } catch (err) {
       console.error('Failed to send Discord notification:', err.message);
     }
