@@ -229,17 +229,22 @@ program.command('reject')
   .description('Reject (delete) a draft')
   .option('--uid <number>', 'Reject specific draft UID')
   .action(async (options, command) => {
-    const { state } = bootstrap(command.optsWithGlobals());
+    const { state, notify } = bootstrap(command.optsWithGlobals());
     let drafts = state.loadDrafts();
 
     if (options.uid) {
+      const rejected = drafts.find(d => d.uid == options.uid);
       drafts = drafts.filter(d => d.uid != options.uid);
       console.log(`Rejected draft ${options.uid}.`);
+      if (rejected) {
+        await notify.send(`❌ Draft rejected: [${options.uid}] ${rejected.subject}`);
+      }
     } else {
       drafts = []; // Reject all? Maybe too dangerous.
       // The original script didn't have a clear "reject all" but "reject <uid>"
       // Let's assume reject without args clears all.
       console.log('Rejecting ALL drafts.');
+      await notify.send('❌ All drafts rejected');
     }
 
     if (drafts.length === 0) {
