@@ -76,7 +76,7 @@ cp reference-responses.example.json data/reference-responses.json
 npm link
 
 # Run the workflow
-./bin/email-workflow cron
+./bin/email-workflow ew-cron
 ```
 
 The first run establishes a UID baseline for your inbox — it won't process old emails. Subsequent runs will pick up anything new.
@@ -109,7 +109,7 @@ See [`.env.example`](.env.example) for a fully commented template. Key variables
 Pass `--config path/to/config.json` to the CLI. See [`config.example.json`](config.example.json) for the full structure.
 
 ```bash
-./bin/email-workflow cron --config ./my-config.json
+./bin/email-workflow ew-cron --config ./my-config.json
 ```
 
 ---
@@ -129,19 +129,19 @@ All commands accept `--config <path>` to load a JSON config file.
 
 ```bash
 # Run the main loop
-./bin/email-workflow cron
+./bin/email-workflow ew-cron
 
 # Approve a specific draft
-./bin/email-workflow approve --uid 42
+./bin/email-workflow ew-approve --uid 42
 
 # Approve and learn from it
-./bin/email-workflow approve --uid 42 --add-ref
+./bin/email-workflow ew-approve --uid 42 --add-ref
 
 # Edit before approving
-./bin/email-workflow edit --uid 42 --body "Thanks for reaching out! ..."
+./bin/email-workflow ew-edit --uid 42 --body "Thanks for reaching out! ..."
 
 # Reject a draft
-./bin/email-workflow reject --uid 42
+./bin/email-workflow ew-reject --uid 42
 ```
 
 ---
@@ -245,7 +245,7 @@ The workflow is designed to run on a schedule. Each invocation advances the stat
 crontab -e
 
 # Run every 5 minutes
-*/5 * * * * cd /path/to/email-workflow-support && /usr/local/bin/node ./bin/email-workflow cron >> ./logs/cron.log 2>&1
+*/5 * * * * cd /path/to/email-workflow-support && /usr/local/bin/node ./bin/email-workflow ew-cron >> ./logs/cron.log 2>&1
 ```
 
 **Tips:**

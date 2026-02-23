@@ -45,7 +45,7 @@ function log(msg) {
 
 // --- Commands ---
 
-program.command('cron')
+program.command('ew-cron')
   .description('Run the workflow state machine (check -> classify -> draft -> notify)')
   .action(async (options, command) => {
     const { state, imap, classifier, notify } = bootstrap(command.optsWithGlobals());
@@ -135,7 +135,7 @@ program.command('cron')
     }
   });
 
-program.command('approve')
+program.command('ew-approve')
   .description('Approve and send drafts')
   .option('--uid <number>', 'Approve specific draft UID')
   .option('--add-ref', 'Add to reference library after sending')
@@ -204,10 +204,10 @@ program.command('approve')
     }
   });
 
-program.command('edit')
-  .description('Edit a draft body')
+program.command('ew-edit')
+  .description('Edit a draft body (use --body or pipe via stdin)')
   .requiredOption('--uid <number>', 'Draft UID')
-  .requiredOption('--body <text>', 'New body text')
+  .option('--body <text>', 'New body text (use \\n for newlines, or pipe multiline via stdin)')
   .action(async (options, command) => {
     const { state } = bootstrap(command.optsWithGlobals());
     const drafts = state.loadDrafts();
@@ -218,14 +218,30 @@ program.command('edit')
       process.exit(1);
     }
 
-    // Fix: Preserve newlines passed as literal \n
-    draft.reply_body = options.body.replace(/\\n/g, '\n');
+    let newBody = options.body;
+    
+    // If no body provided, read from stdin (supports multiline)
+    if (!newBody) {
+      const chunks = [];
+      for await (const chunk of process.stdin) {
+        chunks.push(chunk);
+      }
+      newBody = Buffer.concat(chunks).toString('utf8').trim();
+    }
+    
+    if (!newBody) {
+      console.error('No body provided. Use --body "text" or pipe via stdin.');
+      process.exit(1);
+    }
+
+    // Convert escaped newlines to real newlines
+    draft.reply_body = newBody.replace(/\\n/g, '\n');
     state.saveDrafts(drafts);
     state.clearPosted(); // Clear posted marker to force re-post to Discord
     console.log(`Draft ${options.uid} updated. Will repost preview on next cron.`);
   });
 
-program.command('reject')
+program.command('ew-reject')
   .description('Reject (delete) a draft')
   .option('--uid <number>', 'Reject specific draft UID')
   .action(async (options, command) => {
