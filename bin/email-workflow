@@ -129,7 +129,8 @@ program.command('cron')
       }
 
     } catch (err) {
-      log.error('Workflow error:', err);
+      log('Workflow error: ' + err.message);
+      console.error(err);
       process.exit(1);
     }
   });
